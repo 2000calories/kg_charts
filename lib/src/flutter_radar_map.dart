@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'radar_map_model.dart';
 import 'radar_utils.dart';
 
+@immutable
 class RadarWidget extends StatefulWidget {
   //数据传入
   final RadarMapModel radarMap;
@@ -88,12 +89,10 @@ class _RadarMapWidgetState extends State<RadarWidget>
         children: [
           SizedBox(
               width: 60,
-              child: Text(
-                visualMap.texts.first,
-                textAlign: TextAlign.right,
-                style: visualMap.textStyle,
-                maxLines: 1,
-              )),
+              child: Text(visualMap.texts.first,
+                  style: visualMap.textStyle,
+                  textAlign: TextAlign.right,
+                  maxLines: 1)),
           Expanded(
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
@@ -114,12 +113,10 @@ class _RadarMapWidgetState extends State<RadarWidget>
           ),
           SizedBox(
               width: 60,
-              child: Text(
-                visualMap.texts.last,
-                textAlign: TextAlign.left,
-                style: visualMap.textStyle,
-                maxLines: 1,
-              )),
+              child: Text(visualMap.texts.last,
+                  style: visualMap.textStyle,
+                  textAlign: TextAlign.left,
+                  maxLines: 1)),
         ],
       ),
     );
@@ -314,11 +311,15 @@ class RadarMapPainter extends CustomPainter {
                 radarMap.data[i].connectLineStyle?.color ??
                 radarMap.data[i].dataAreaStyle.color,
           size: radarMap.data[i].dataMarkerStyle.size);
+      final markerR = radarMap.data[i].dataMarkerStyle.size;
+      // Push labels outward past the dot and stroke so they do not sit on the geometry.
+      final labelRadialOutset = markerR / 2;
       drawRadarText(
           canvas,
           radarMap.data[i].data,
           radarMap.indicator.map((item) => item.maxValues).toList(),
-          radarMap.data[i].dataAreaStyle.color);
+          radarMap.data[i].dataAreaStyle.color,
+          radialOutset: labelRadialOutset);
     }
 
     drawInfoText(canvas);
@@ -511,7 +512,8 @@ class RadarMapPainter extends CustomPainter {
   }
 
   void drawRadarText(
-      ui.Canvas canvas, List<double> value, List<double> maxList, Color color) {
+      ui.Canvas canvas, List<double> value, List<double> maxList, Color color,
+      {double radialOutset = 0}) {
     if (outLineText != null) {
       // Path mradarPath = Path();
       double step = radarMap.radius / elementLength; //每小段的长度
@@ -521,6 +523,10 @@ class RadarMapPainter extends CustomPainter {
       for (int i = 0; i < value.length; i++) {
         double mark = value[i] / (maxList[i] / value.length);
         var deg = pi / 180 * (360 / value.length * i - 90);
+        final ux = cos(deg);
+        final uy = sin(deg);
+        final vx = mark * step * ux + ux * radialOutset;
+        final vy = mark * step * uy + uy * radialOutset;
 
         final paragraphBuilder = ui.ParagraphBuilder(ui.ParagraphStyle(
             textAlign: TextAlign.center,
@@ -533,8 +539,8 @@ class RadarMapPainter extends CustomPainter {
         paragraph.layout(ui.ParagraphConstraints(width: maxWidth));
         var pianyix = cos(deg) * (paragraph.width / 2);
         var pianyiy = sin(deg) * (paragraph.height / 2);
-        var of = Offset(mark * step * cos(deg) - paragraph.width / 2 + pianyix,
-            mark * step * sin(deg) - paragraph.height / 2 + pianyiy);
+        var of = Offset(vx - paragraph.width / 2 + pianyix,
+            vy - paragraph.height / 2 + pianyiy);
         canvas.drawParagraph(paragraph, of);
 
         // mradarPath.lineTo(mark * step * cos(deg), mark * step * sin(deg));
