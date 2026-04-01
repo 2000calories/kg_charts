@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'radar_map_model.dart';
 import 'radar_utils.dart';
 
-@immutable
 class RadarWidget extends StatefulWidget {
   //数据传入
   final RadarMapModel radarMap;
@@ -56,11 +55,6 @@ class _RadarMapWidgetState extends State<RadarWidget>
     super.initState();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   ///构建图例
   Widget buildLegend(String legendTitle, Color legendColor,
       {Color? textColor, double? textFontSize}) {
@@ -93,8 +87,13 @@ class _RadarMapWidgetState extends State<RadarWidget>
       child: Row(
         children: [
           SizedBox(
-              width: 50,
-              child: Text(visualMap.texts.first, textAlign: TextAlign.right)),
+              width: 60,
+              child: Text(
+                visualMap.texts.first,
+                textAlign: TextAlign.right,
+                style: visualMap.textStyle,
+                maxLines: 1,
+              )),
           Expanded(
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
@@ -114,8 +113,13 @@ class _RadarMapWidgetState extends State<RadarWidget>
             ),
           ),
           SizedBox(
-              width: 50,
-              child: Text(visualMap.texts.last, textAlign: TextAlign.left)),
+              width: 60,
+              child: Text(
+                visualMap.texts.last,
+                textAlign: TextAlign.left,
+                style: visualMap.textStyle,
+                maxLines: 1,
+              )),
         ],
       ),
     );
@@ -191,7 +195,6 @@ class _RadarMapWidgetState extends State<RadarWidget>
     ]);
   }
   // MainAxisAlignment.spaceAround
-
 }
 
 typedef LineText = String Function(int p, int length);
@@ -622,7 +625,7 @@ class RadarMapPainter extends CustomPainter {
       node.add(rect);
     }
 
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _widthHeight.call(top, bottom);
     });
   }
